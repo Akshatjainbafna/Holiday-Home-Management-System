@@ -83,6 +83,8 @@ def add_room():
                 room_name=data['room_name'],
                 rules=data['rules']
             ).save()
+            holiday_home.update(inc__no_rooms = 1)
+
             return make_response('Room created!', 200)
         else:
             return make_response('Holiday Home isnt found!', 404)
@@ -149,7 +151,6 @@ def get_all_homes():
         return make_response('Unauthorized Access', 401)
 
 
-
 @app.route("/get_homes_of_owners", methods=['GET'])
 def get_homes_of_owners():
     if 'user_name' in session:
@@ -172,22 +173,26 @@ def get_home_in_a_city():
 
         URL = f'https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api}'
         weatherRes = requests.get(URL)
-
+        
         if weatherRes.status_code == 200:
-            weatherData = response.json()
+            weatherData = weatherRes.json()
+            print(weatherData)
              # getting the main dict block
             main = weatherData['main']
             # getting temperature
             temperature = main['temp']
             string_of_owner = response.to_json()
             dict_of_owner = json.loads(string_of_owner)
-            dict_of_owner['temp'] = temperature
+
+            temperature = {'temperature': temperature}
+            dict_of_owner.append(temperature)
 
             return make_response(json.dumps(dict_of_owner), 200)
         
         return make_response(response.to_json(), 200)
     else:
         return make_response('Unauthorized Access', 401)
+
 
 @app.route("/get_rooms_of_home", methods=['GET'])
 def get_rooms_of_home():
@@ -227,6 +232,7 @@ def get_images_of_home():
     else:
         return make_response('Unauthorized Access', 401)
     
+
 @app.route("/delete_home", methods=['DELETE'])
 def delete_home():
     if 'user_name' in session:
@@ -245,6 +251,7 @@ def delete_home():
     else:
         return make_response('Unauthorized Access', 401)
     
+
 @app.route("/update_room_info", methods=['POST'])
 def update_home():
     if 'user_name' in session:
@@ -264,6 +271,7 @@ def update_home():
             return make_response('Holiday Home isnt found!', 404)
     else:
         return make_response('Unauthorized Access', 401)
+
 
 
 if __name__ == '__main__':
