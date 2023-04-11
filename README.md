@@ -1,8 +1,6 @@
 What is this project?(Technical Precepective)
 
-A small CRUD web application build usin![image_2023-04-11_191851507](https://user-images.githubusercontent.com/86974814/231183814-a7cafba1-5c70-45de-926f-d35cd2f723a8.png)
-![image_2023-04-11_191922680](https://user-images.githubusercontent.com/86974814/231183952-eef3bba0-0ae7-49a0-8cc2-fdc092e44a2a.png)
-g lightweight and fast python microframework.
+A small CRUD web application build using lightweight and fast python microframework.
 
 What is this project?
 A web app that helps to manage beautiful holiday homes of NRIs so it can be rented and monetize.
@@ -56,3 +54,6 @@ Step 2: pip install
 Step 3: Assuming that you have MongoDB installed and running. Run the command python app.py from the directory where app.py file is kept.
 
 Step 4: You can test the APIs and Perform all the CRUD operations with the specified methods. Simply Open Postman, or install if you haven't already install and just hit the requests like to get all the Homes of a particular city just hit http://localhost:5001/get_home_in_a_city with GET method and add {city: 'Delhi'} with content type: x-www-form-urlencoded in body of the request.
+
+Another Endpoint to create a home:
+![image_2023-04-11_191922680](https://user-images.githubusercontent.com/86974814/231183952-eef3bba0-0ae7-49a0-8cc2-fdc092e44a2a.png)
