@@ -4,16 +4,19 @@ from missingRequiredField import checkFields
 from flask_session import Session
 from models import Owner, HolidayHomes, Rooms
 import json
+import requests
 from werkzeug.utils import secure_filename
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 # middlewares
 app.secret_key = "abc"  
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 app.config["MONGODB_SETTINGS"] = {
-    "host": "mongodb://localhost:27017/uimpactify"}
+    "host": "mongodb://localhost:27017/inkredo"}
 
 # initalize mongodb odm
 db = MongoEngine()
@@ -163,9 +166,25 @@ def get_homes_of_owners():
 def get_home_in_a_city():
     if 'user_name' in session:
         data = request.form
-        
-        response = HolidayHomes.objects(city = data['city']).all()
+        api = '56cc01e53fba330279561106f976e85c'
+        city = data['city']
+        response = HolidayHomes.objects(city = city).all()
 
+        URL = f'https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api}'
+        weatherRes = requests.get(URL)
+
+        if weatherRes.status_code == 200:
+            weatherData = response.json()
+             # getting the main dict block
+            main = weatherData['main']
+            # getting temperature
+            temperature = main['temp']
+            string_of_owner = response.to_json()
+            dict_of_owner = json.loads(string_of_owner)
+            dict_of_owner['temp'] = temperature
+
+            return make_response(json.dumps(dict_of_owner), 200)
+        
         return make_response(response.to_json(), 200)
     else:
         return make_response('Unauthorized Access', 401)
