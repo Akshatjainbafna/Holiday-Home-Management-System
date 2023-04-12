@@ -7,7 +7,7 @@ A web app that helps to manage beautiful holiday homes of NRIs so it can be rent
 
 What you can do on this app?(with end points, method allowed, data required with content tye x-www-form-urlencoded)
 
-Register users
+Register users or if already registered login and start a session to play around with the API endpoints
 -> /create_user -- [POST] -- {'user_name'}
 
 Create Holiday home
