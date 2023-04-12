@@ -11,7 +11,7 @@ Register users or if already registered login and start a session to play around
 -> /create_user -- [POST] -- {'user_name'}
 
 Create Holiday home
--> /create_home -- [POST] -- {'owner1', 'owner2', 'home_name'}
+-> /create_home -- [POST] -- {'owner1', 'owner2', 'home_name', 'city'}
 
 Add Rooms for a particular house home 
 -> /add_room -- [POST] -- {'home_name'}
