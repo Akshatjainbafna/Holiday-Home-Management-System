@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, make_response, session
+from flask import Flask, render_template, request, make_response, session, jsonify
 from flask_mongoengine import MongoEngine
 from missingRequiredField import checkFields
 from flask_session import Session
@@ -12,7 +12,7 @@ app = Flask(__name__)
 CORS(app)
 
 # middlewares
-app.secret_key = "abc"  
+app.secret_key = "abc"
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 app.config["MONGODB_SETTINGS"] = {
@@ -31,14 +31,14 @@ def create_user():
         return make_response("Missing required field: " + x, 400)
 
     user = Owner.objects(user_name=data['user_name']).first()
-    print(user)
+
     if not user:
         new_user = Owner(user_name=data['user_name']).save()
         session["user_name"] = data['user_name']
-        return make_response(json.dumps(new_user.user_name), 200)
+        return make_response(new_user.user_name, 200)
     else:
-        return make_response('Username already in use', 200)
-
+        session['user_name'] = data['user_name']
+        return make_response('Login successfull!', 200)
 
 
 @app.route("/create_home", methods=['POST'])
@@ -55,13 +55,13 @@ def create_home():
         if owner1 and owner2:
             owners = [data['owner1'], data['owner2']]
             home = HolidayHomes(
-                owners=owners, 
+                owners=owners,
                 home_name=data['home_name'],
                 city=data['city']
-                ).save()
+            ).save()
             return make_response('Holiday home created!', 200)
         else:
-            return make_response('Owner isnt found!', 404)
+            return make_response('Owner not found!', 404)
     else:
         return make_response('Unauthorized Access', 401)
 
@@ -83,7 +83,7 @@ def add_room():
                 room_name=data['room_name'],
                 rules=data['rules']
             ).save()
-            holiday_home.update(inc__no_rooms = 1)
+            holiday_home.update(inc__no_rooms=1)
 
             return make_response('Room created!', 200)
         else:
@@ -111,7 +111,7 @@ def add_images_of_home():
             fileHandler.write(image.read())
             fileHandler.close()
 
-            holiday_home.update(set__image = address_of_image)
+            holiday_home.update(set__image=address_of_image)
             return make_response('Image uploaded!', 200)
         else:
             return make_response('Holiday Home isnt found!', 404)
@@ -128,8 +128,7 @@ def get_all_owners():
 
         for owner in all_owners:
             allTheHomesOfOwner = []
-            for home in HolidayHomes.objects(owners = owner.user_name).all():
-                print(home)
+            for home in HolidayHomes.objects(owners=owner.user_name).all():
                 allTheHomesOfOwner.append(home.home_name)
 
             string_of_owner = owner.to_json()
@@ -137,7 +136,7 @@ def get_all_owners():
             dict_of_owner['homes'] = allTheHomesOfOwner
             response.append(dict_of_owner)
 
-        return make_response(json.dumps(response), 200)
+        return jsonify(response)
     else:
         return make_response('Unauthorized Access', 401)
 
@@ -146,7 +145,7 @@ def get_all_owners():
 def get_all_homes():
     if 'user_name' in session:
         response = HolidayHomes.objects.all()
-        return make_response(response.to_json(), 200)
+        return jsonify(response)
     else:
         return make_response('Unauthorized Access', 401)
 
@@ -155,10 +154,10 @@ def get_all_homes():
 def get_homes_of_owners():
     if 'user_name' in session:
         data = request.form
-        
-        owner_obj = Owner.objects(user_name = data['owner']).first()
-        response = HolidayHomes.objects(owners = owner_obj.user_name).all()
-        return make_response(response.to_json(), 200)
+
+        owner_obj = Owner.objects(user_name=data['owner']).first()
+        response = HolidayHomes.objects(owners=owner_obj.user_name).all()
+        return jsonify(response)
     else:
         return make_response('Unauthorized Access', 401)
 
@@ -169,27 +168,24 @@ def get_home_in_a_city():
         data = request.form
         api = '56cc01e53fba330279561106f976e85c'
         city = data['city']
-        response = HolidayHomes.objects(city = city).all()
+        response = HolidayHomes.objects(city=city).all()
 
         URL = f'https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api}'
         weatherRes = requests.get(URL)
-        
+
         if weatherRes.status_code == 200:
             weatherData = weatherRes.json()
             print(weatherData)
-             # getting the main dict block
+            # getting the main dict block
             main = weatherData['main']
             # getting temperature
             temperature = main['temp']
-            string_of_owner = response.to_json()
-            dict_of_owner = json.loads(string_of_owner)
 
             temperature = {'temperature': temperature}
-            dict_of_owner.append(temperature)
 
-            return make_response(json.dumps(dict_of_owner), 200)
-        
-        return make_response(response.to_json(), 200)
+            return jsonify(response, temperature)
+
+        return jsonify(response)
     else:
         return make_response('Unauthorized Access', 401)
 
@@ -208,7 +204,7 @@ def get_rooms_of_home():
             rooms = Rooms.objects(
                 holiday_homes=holiday_home
             ).all()
-            return make_response(rooms.to_json(), 200)
+            return jsonify(rooms)
         else:
             return make_response('Holiday Home isnt found!', 404)
     else:
@@ -226,12 +222,12 @@ def get_images_of_home():
         holiday_home = HolidayHomes.objects(home_name=data['home_name']).only('image').first()
 
         if holiday_home:
-            return make_response(holiday_home.to_json(), 200)
+            return jsonify(holiday_home)
         else:
             return make_response('Holiday Home isnt found!', 404)
     else:
         return make_response('Unauthorized Access', 401)
-    
+
 
 @app.route("/delete_home", methods=['DELETE'])
 def delete_home():
@@ -242,7 +238,8 @@ def delete_home():
             return make_response("Missing required field: " + x, 400)
 
         holiday_home = HolidayHomes.objects(home_name=data['home_name']).first()
-        list_of_rooms_in_home = Rooms.objects(holiday_homes = holiday_home).all()
+        list_of_rooms_in_home = Rooms.objects(holiday_homes=holiday_home).all()
+
         list_of_rooms_in_home.delete()
         holiday_home.delete()
 
@@ -250,7 +247,7 @@ def delete_home():
 
     else:
         return make_response('Unauthorized Access', 401)
-    
+
 
 @app.route("/update_room_info", methods=['POST'])
 def update_home():
@@ -259,19 +256,18 @@ def update_home():
         x = checkFields(data, fields=['room_name'])
         if (x):
             return make_response("Missing required field: " + x, 400)
-        
-        room = Rooms.objects(room_name = data['room_name']).first()
+
+        room = Rooms.objects(room_name=data['room_name']).first()
 
         availability = True if data['availability'] == 'true' else False
 
         if room:
-            room.update(set__rents = data['rents'], set__availability = availability, set__check_out = data['check_out'], set__check_in = data['check_in'], set__rules = data['rules'])
+            room.update(set__rents=data['rents'], set__availability=availability, set__check_out=data['check_out'], set__check_in=data['check_in'], set__rules=data['rules'])
             return make_response('Updated room info successfully!', 200)
         else:
             return make_response('Holiday Home isnt found!', 404)
     else:
         return make_response('Unauthorized Access', 401)
-
 
 
 if __name__ == '__main__':

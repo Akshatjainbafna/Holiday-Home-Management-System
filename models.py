@@ -10,7 +10,7 @@ class HolidayHomes(me.Document):
     home_name = me.StringField(max_length=150, unique=True)
     city = me.StringField(max_length=100)
     no_rooms = me.IntField(default=0)
-    image = me.StringField(default='./default.png')
+    image = me.StringField(default='./static/default.jpg')
 
 class Rooms(me.Document):
     holiday_homes = me.ReferenceField(HolidayHomes, reverse_delete_rule=me.CASCADE)
