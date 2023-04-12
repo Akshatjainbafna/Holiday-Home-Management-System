@@ -49,7 +49,7 @@ It's suprisingly simpler than you'd think.
 
 Step 1: Clone the repository.
 
-Step 2: pip install
+Step 2: pip install -r requirements.txt
 
 Step 3: Assuming that you have MongoDB installed and running. Run the command python app.py from the directory where app.py file is kept.
 
